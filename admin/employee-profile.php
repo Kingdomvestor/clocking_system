@@ -563,7 +563,7 @@ td {
     .calendar-hours-grid {
         grid-template-columns: 1fr;
     }
-}z
+}
     </style>
 </head>
 <body>
