@@ -236,7 +236,7 @@ $employees = $db->query('
                         <option value="Accountancy">Accountancy</option>
                         <option value="Business Administration">Business Administration</option>
                         <option value="Computer Science">Computer Science</option>
-                        <option value="Computer Science">Foundationa Class</option>
+                        <option value="Computer Science">Foundational Class</option>
                     </select>
                 </div>
 
