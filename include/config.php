@@ -10,7 +10,7 @@ define('DB_PORT', getenv('DB_PORT') ?: '5432');
 define('DB_USER', getenv('DB_USER') ?: 'postgres');
 define('DB_PASS', getenv('DB_PASS') ?: '');
 define('DB_NAME', getenv('DB_NAME') ?: 'postgres');
-
+define('DB_SSLMODE', getenv('DB_SSLMODE') ?: 'require');
 
 
 // --- App Settings ---
@@ -33,7 +33,7 @@ function db(): PDO {
     static $pdo = null;
     if ($pdo === null) {
         try {
-           $dsn = 'pgsql:host=' . DB_HOST . ';port=' . DB_PORT . ';dbname=' . DB_NAME . ';sslmode=require';
+           $dsn = 'pgsql:host=' . DB_HOST . ';port=' . DB_PORT . ';dbname=' . DB_NAME . ';sslmode=' . DB_SSLMODE;
             $pdo = new PDO($dsn, DB_USER, DB_PASS, [
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
