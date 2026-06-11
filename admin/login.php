@@ -16,8 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = db()->prepare('SELECT * FROM admin WHERE username = ?');
         $stmt->execute([$username]);
         $admin = $stmt->fetch();
-
-        if ($admin && $password === $admin['password_hash']) {
+        
+            if ($admin && password_verify($password, $admin['password_hash'])) {
             $_SESSION['admin_id']   = $admin['id'];
             $_SESSION['admin_name'] = $admin['full_name'];
             db()->prepare('UPDATE admin SET last_login = NOW() WHERE id = ?')
