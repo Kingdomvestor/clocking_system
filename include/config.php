@@ -39,7 +39,7 @@ function db(): PDO {
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES   => false,
             ]);
-            $pdo->exec("SET time_zone = '+01:00'"); // Sync MySQL to WAT
+            $pdo->exec("SET TIME ZONE 'Africa/Lagos'"); // Sync MySQL to WAT
         } catch (PDOException $e) {
             http_response_code(500);
             die(json_encode(['error' => 'Database connection failed']));
