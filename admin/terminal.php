@@ -558,7 +558,7 @@ $employees = $employees->fetchAll();
 <!-- Main -->
 <div class="main">
     <div class="topbar">
-        <h1>Attendance Terminal</h1>
+        <h1>Soteria Attendance System</h1>
         <div class="topbar-right">
             <div class="live-badge"><div class="live-dot"></div> LIVE</div>
             <span id="liveTime"></span>
