@@ -117,7 +117,7 @@ if ($hoursFrom > $hoursTo) {
     [$hoursFrom, $hoursTo] = [$hoursTo, $hoursFrom];
 }
 
-$statsQ = $db->prepare('
+$statsQ = $db->prepare("
     SELECT
         COUNT(DISTINCT att_date) AS total_days,
         COALESCE(SUM(COALESCE(hours_worked, 0)), 0) AS total_hours,
@@ -126,7 +126,7 @@ $statsQ = $db->prepare('
     FROM attendance
     WHERE staff_id = ?
       AND att_date >= CURRENT_DATE - INTERVAL '30 days'
-');
+");
 $statsQ->execute([$staff_id]);
 $stats = $statsQ->fetch();
 
