@@ -3,5 +3,5 @@ $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 
 $host   = $_SERVER['HTTP_HOST'];
 
 // Redirect to the admin dashboard
-header("Location: {$scheme}://{$host}/clocking_system/admin/dashboard.php");
+header("Location: {$scheme}://{$host}/admin/dashboard.php");
 exit;
