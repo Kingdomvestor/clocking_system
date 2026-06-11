@@ -44,7 +44,12 @@ if (isset($_GET['reset_fp'])) {
     $success = 'Fingerprint reset. Staff must re-register.';
 }
 
-$employees = $db->query('SELECT e.*, COUNT(w.staff_id) AS has_fp FROM employee e LEFT JOIN webauthn_credentials w ON e.staff_id = w.staff_id GROUP BY e.staff_id ORDER BY e.is_active DESC, e.full_name ASC')->fetchAll();
+$employees = $db->query('
+    SELECT e.*,
+           (SELECT COUNT(*) FROM webauthn_credentials w WHERE w.staff_id = e.staff_id) AS has_fp
+    FROM employee e
+    ORDER BY e.is_active DESC, e.full_name ASC
+')->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
