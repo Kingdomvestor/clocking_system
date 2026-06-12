@@ -742,17 +742,11 @@ $employees = $employees->fetchAll();
 <script>
 const SITE_URL = <?= json_encode(SITE_URL) ?>;
 const EXPIRY   = 120;
-const CIRC     = 2 * Math.PI * 26; // r=26
+const CIRC     = 2 * Math.PI * 26;
 
-// ── State ──────────────────────────────────────────────────────────────────
-let ovStaff     = null;   // current staff object
-let ovAction    = null;   // current action string
-let ovToken     = null;   // current QR token
-let timerInt    = null;
-let pollInt     = null;
-let countdown   = EXPIRY;
+let ovStaff = null, ovAction = null, ovToken = null;
+let timerInt = null, pollInt = null, countdown = EXPIRY;
 
-// ── Live clock ─────────────────────────────────────────────────────────────
 function updateClock() {
     const now = new Date();
     document.getElementById('liveTime').textContent =
@@ -762,7 +756,6 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// ── Staff card filter ──────────────────────────────────────────────────────
 function filterCards() {
     const q = document.getElementById('staffSearch').value.toLowerCase().trim();
     document.querySelectorAll('.staff-card').forEach(card => {
@@ -771,52 +764,29 @@ function filterCards() {
     });
 }
 
-// ── Open overlay ───────────────────────────────────────────────────────────
 function openOverlay(staff) {
-    ovStaff  = staff;
-    ovAction = staff.next_action;
-
-    // Populate staff info
+    ovStaff = staff; ovAction = staff.next_action;
     document.getElementById('ovStaffAv').textContent   = staff.full_name.substring(0,2).toUpperCase();
-    document.getElementById('ovStaffName').textContent  = staff.full_name;
-    document.getElementById('ovStaffDept').textContent  = staff.staff_id + ' · ' + staff.department;
-
-    // Today's times
-    document.getElementById('ovClockIn').textContent  = staff.clock_in  || '--:--:--';
-    document.getElementById('ovClockOut').textContent = staff.clock_out || '--:--';
-    document.getElementById('ovHours').textContent    = staff.hours_worked ? staff.hours_worked + 'h' : '--';
-
-    // Fingerprint warning
+    document.getElementById('ovStaffName').textContent = staff.full_name;
+    document.getElementById('ovStaffDept').textContent = staff.staff_id + ' · ' + staff.department;
+    document.getElementById('ovClockIn').textContent   = staff.clock_in  || '--:--:--';
+    document.getElementById('ovClockOut').textContent  = staff.clock_out || '--:--';
+    document.getElementById('ovHours').textContent     = staff.hours_worked ? staff.hours_worked + 'h' : '--';
     const fpWarn = document.getElementById('ovFpWarn');
     const fpBtn  = document.getElementById('ovRegBtn');
-    if (!staff.has_fp) {
-        fpWarn.style.display = 'block';
-        fpBtn.style.display  = 'block';
-    } else {
-        fpWarn.style.display = 'none';
-        fpBtn.style.display  = 'none';
-    }
-
-    // Reset notify
+    fpWarn.style.display = staff.has_fp ? 'none' : 'block';
+    fpBtn.style.display  = staff.has_fp ? 'none' : 'block';
     document.getElementById('ovNotify').className = 'ov-notify';
-
-    // Show overlay
     document.getElementById('overlayBg').classList.add('open');
     document.body.style.overflow = 'hidden';
-
-    // Generate QR
     generateQR();
 }
 
 function closeOverlay() {
-    clearInterval(timerInt);
-    clearInterval(pollInt);
+    clearInterval(timerInt); clearInterval(pollInt);
     document.getElementById('overlayBg').classList.remove('open');
     document.body.style.overflow = '';
-    ovStaff  = null;
-    ovToken  = null;
-    ovAction = null;
-    // Reset QR display
+    ovStaff = ovToken = ovAction = null;
     document.getElementById('ovQrLoading').style.display = 'block';
     document.getElementById('ovQrCanvas').style.display  = 'none';
     document.getElementById('ovQrWrap').classList.remove('expired');
@@ -827,18 +797,13 @@ function closeOverlay() {
 function handleOverlayClick(e) {
     if (e.target === document.getElementById('overlayBg')) closeOverlay();
 }
-
-// Close on Escape
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeOverlay(); });
 
-// ── Switch action (in / out / register) ───────────────────────────────────
 function switchAction(action) {
     if (ovAction === action) return;
     ovAction = action;
-    clearInterval(timerInt);
-    clearInterval(pollInt);
-    // Reset QR
-    document.getElementById('ovQrCanvas').innerHTML  = '';
+    clearInterval(timerInt); clearInterval(pollInt);
+    document.getElementById('ovQrCanvas').innerHTML = '';
     document.getElementById('ovQrCanvas').style.display  = 'none';
     document.getElementById('ovQrLoading').style.display = 'block';
     document.getElementById('ovQrWrap').classList.remove('expired');
@@ -847,28 +812,23 @@ function switchAction(action) {
     generateQR();
 }
 
-// ── Update badge ───────────────────────────────────────────────────────────
 function updateBadge(action) {
     const badge = document.getElementById('ovBadge');
     const map = {
-        clock_in:  ['● Clock In',           'ov-action-badge badge-in'],
-        clock_out: ['● Clock Out',           'ov-action-badge badge-out'],
-        register:  ['⊕ Register Fingerprint','ov-action-badge badge-reg'],
+        clock_in:  ['● Clock In',            'ov-action-badge badge-in'],
+        clock_out: ['● Clock Out',            'ov-action-badge badge-out'],
+        register:  ['⊕ Register Fingerprint', 'ov-action-badge badge-reg'],
     };
     badge.textContent = map[action][0];
     badge.className   = map[action][1];
 }
 
-// ── Generate QR ────────────────────────────────────────────────────────────
 async function generateQR() {
     if (!ovStaff || !ovAction) return;
     updateBadge(ovAction);
-
-    // Show loading spinner
     document.getElementById('ovQrLoading').style.display = 'block';
     document.getElementById('ovQrCanvas').style.display  = 'none';
     document.getElementById('ovQrWrap').classList.remove('expired');
-
     try {
         const res  = await fetch(SITE_URL + '/api/generate-qr.php', {
             method: 'POST',
@@ -876,145 +836,90 @@ async function generateQR() {
             body: JSON.stringify({ staff_id: ovStaff.staff_id, action: ovAction })
         });
         const data = await res.json();
-
-        if (data.error) {
-            showOverlayError(data.error);
-            return;
-        }
-
+        if (data.error) { showOverlayError(data.error); return; }
         ovToken = data.token;
-        const url = SITE_URL + '/mobile/verify.php?token=' + data.token;
-
-        // Render QR code
         const canvas = document.getElementById('ovQrCanvas');
         canvas.innerHTML = '';
         new QRCode(canvas, {
-            text:       url,
-            width:      200,
-            height:     200,
-            colorDark:  '#000000',
-            colorLight: '#ffffff',
+            text: SITE_URL + '/mobile/verify.php?token=' + data.token,
+            width: 200, height: 200,
+            colorDark: '#000000', colorLight: '#ffffff',
         });
-
-        // Show QR, hide spinner
         document.getElementById('ovQrLoading').style.display = 'none';
         canvas.style.display = 'block';
-
         startTimer();
         startPolling(ovToken);
-
     } catch(e) {
         showOverlayError('Network error. Please try again.');
     }
 }
 
-// ── Timer ──────────────────────────────────────────────────────────────────
 function startTimer() {
     clearInterval(timerInt);
     countdown = EXPIRY;
     const arc = document.getElementById('ovTimerArc');
     const num = document.getElementById('ovTimerNum');
-
     arc.style.strokeDasharray  = CIRC;
     arc.style.strokeDashoffset = 0;
     arc.style.stroke = 'var(--ot-red)';
     num.textContent  = countdown;
-
     timerInt = setInterval(() => {
         countdown--;
         num.textContent = countdown;
         arc.style.strokeDashoffset = CIRC * (1 - countdown / EXPIRY);
-
-        if (countdown <= 10) arc.style.stroke = '#ff6b7a';
-        else                 arc.style.stroke = 'var(--ot-red)';
-
+        arc.style.stroke = countdown <= 10 ? '#ff6b7a' : 'var(--ot-red)';
         if (countdown <= 0) {
-            clearInterval(timerInt);
-            clearInterval(pollInt);
+            clearInterval(timerInt); clearInterval(pollInt);
             document.getElementById('ovQrWrap').classList.add('expired');
-            setTimeout(() => {
-                if (ovStaff && ovAction) generateQR();
-            }, 400);
+            setTimeout(() => { if (ovStaff && ovAction) generateQR(); }, 400);
         }
     }, 1000);
 }
 
-// ── Polling ────────────────────────────────────────────────────────────────
 function startPolling(token) {
     clearInterval(pollInt);
     pollInt = setInterval(async () => {
         try {
             const res  = await fetch(SITE_URL + '/api/status.php?token=' + token);
             const data = await res.json();
-
-            if (data.confirmed) {
-                clearInterval(pollInt);
-                clearInterval(timerInt);
-                onConfirmed(data);
-            }
-
-            if (data.expired) {
-                clearInterval(pollInt);
-            }
+            if (data.confirmed) { clearInterval(pollInt); clearInterval(timerInt); onConfirmed(data); }
+            if (data.expired)   { clearInterval(pollInt); }
         } catch(e) {}
     }, 2000);
 }
 
-// ── On confirmed ──────────────────────────────────────────────────────────
 function onConfirmed(data) {
-    // Show success notification
-    const notify = document.getElementById('ovNotify');
-    const title  = document.getElementById('ovNotifyTitle');
-    const msg    = document.getElementById('ovNotifyMsg');
+    refreshStats(); // ✅ Immediate grid update
 
+    const notify = document.getElementById('ovNotify');
     const actionLabels = {
         clock_in:  '✓ Clocked In Successfully',
         clock_out: '✓ Clocked Out Successfully',
         register:  '✓ Fingerprint Registered',
     };
-    notify.className  = 'ov-notify success';
-    title.textContent = actionLabels[data.action] || '✓ Done';
-    msg.textContent   = 'Recorded at ' + data.time;
-
-    // Update today's display
-    if (data.action === 'clock_in') {
-        document.getElementById('ovClockIn').textContent = data.time;
-    } else if (data.action === 'clock_out') {
-        document.getElementById('ovClockOut').textContent = data.time;
-    }
-
-    // Expire QR
+    notify.className = 'ov-notify success';
+    document.getElementById('ovNotifyTitle').textContent = actionLabels[data.action] || '✓ Done';
+    document.getElementById('ovNotifyMsg').textContent   = 'Recorded at ' + data.time;
+    if (data.action === 'clock_in')  document.getElementById('ovClockIn').textContent  = data.time;
+    if (data.action === 'clock_out') document.getElementById('ovClockOut').textContent = data.time;
     document.getElementById('ovQrWrap').classList.add('expired');
     document.getElementById('ovTimerNum').textContent = '✓';
-
-    // Refresh page stats + grid after 2.5s
-    setTimeout(() => {
-        refreshStats();
-        closeOverlay();
-    }, 2500);
+    setTimeout(() => { refreshStats(); closeOverlay(); }, 2500);
 }
 
-// ── Show overlay error ─────────────────────────────────────────────────────
 function showOverlayError(msg) {
     const notify = document.getElementById('ovNotify');
     document.getElementById('ovNotifyTitle').textContent = 'Error';
     document.getElementById('ovNotifyMsg').textContent   = msg;
-
     notify.className = 'ov-notify error';
     document.getElementById('ovQrLoading').style.display = 'none';
-
     setTimeout(() => {
         notify.style.transition = 'opacity 0.4s ease';
         notify.style.opacity = '0';
-
-        setTimeout(() => {
-            notify.style.display = 'none';
-            notify.style.opacity = '1';
-        }, 600);
+        setTimeout(() => { notify.style.display = 'none'; notify.style.opacity = '1'; }, 600);
     }, 5000);
 }
 
-// ── Refresh stats + grid (live update without full reload) ─────────────────
 async function refreshStats() {
     try {
         const res  = await fetch(SITE_URL + '/api/admin-feed.php');
@@ -1024,16 +929,15 @@ async function refreshStats() {
             document.getElementById('statOut').textContent    = data.counts.out;
             document.getElementById('statAbsent').textContent = data.counts.absent;
         }
-        // Reload grid from server to reflect new status dots
         if (data.grid_html) {
             document.getElementById('staffGrid').innerHTML = data.grid_html;
         }
     } catch(e) {}
 }
 
-// Auto refresh stats every 20s
-setInterval(refreshStats, 20000);
+// ✅ Refresh every 3 seconds
+setInterval(refreshStats, 3000);
 </script>
-
+    
 </body>
 </html>
