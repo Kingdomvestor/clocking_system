@@ -23,6 +23,51 @@ define('SITE_NAME', 'Soteria Business School Attendance Clocking System');
 // Nigeria timezone (WAT = UTC+1)
 date_default_timezone_set('Africa/Lagos');
 
+// ── DB-backed session handler (survives Render restarts) ────────────────────
+class DbSessionHandler implements SessionHandlerInterface {
+    private PDO $pdo;
+
+    public function open($path, $name): bool {
+        $this->pdo = db();
+        return true;
+    }
+    public function close(): bool { return true; }
+
+    public function read($id): string {
+        $stmt = $this->pdo->prepare('SELECT session_data FROM php_sessions WHERE session_id = ?');
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        return $row ? $row['session_data'] : '';
+    }
+
+    public function write($id, $data): bool {
+        $this->pdo->prepare('
+            INSERT INTO php_sessions (session_id, session_data, updated_at)
+            VALUES (?, ?, NOW())
+            ON CONFLICT (session_id) DO UPDATE
+            SET session_data = EXCLUDED.session_data,
+                updated_at   = NOW()
+        ')->execute([$id, $data]);
+        return true;
+    }
+
+    public function destroy($id): bool {
+        $this->pdo->prepare('DELETE FROM php_sessions WHERE session_id = ?')
+            ->execute([$id]);
+        return true;
+    }
+
+    public function gc($maxlifetime): int {
+        $stmt = $this->pdo->prepare(
+            "DELETE FROM php_sessions WHERE updated_at < NOW() - INTERVAL '$maxlifetime seconds'"
+        );
+        $stmt->execute();
+        return $stmt->rowCount();
+    }
+}
+
+session_set_save_handler(new DbSessionHandler(), true);
+
 // --- Session ---
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
