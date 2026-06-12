@@ -22,7 +22,7 @@ $stmt = db()->prepare('
     SELECT qt.*, e.full_name
     FROM qr_tokens qt
     JOIN employee e ON qt.staff_id = e.staff_id
-    WHERE qt.token = ? AND qt.action = "register" AND qt.used = 0 AND qt.expires_at > NOW()
+    WHERE qt.token = ? AND qt.action = 'register' AND qt.used = 0 AND qt.expires_at > NOW()
 ');
 $stmt->execute([$token]);
 $qr = $stmt->fetch();
