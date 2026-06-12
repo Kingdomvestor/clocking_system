@@ -904,7 +904,7 @@ function onConfirmed(data) {
     if (data.action === 'clock_out') document.getElementById('ovClockOut').textContent = data.time;
     document.getElementById('ovQrWrap').classList.add('expired');
     document.getElementById('ovTimerNum').textContent = '✓';
-    setTimeout(() => { refreshStats(); closeOverlay(); }, 2500);
+    setTimeout(() => { refreshStats(); closeOverlay(); }, 4000);
 }
 
 function showOverlayError(msg) {
