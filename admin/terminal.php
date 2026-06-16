@@ -6,7 +6,7 @@ $db    = db();
 $today = date('Y-m-d');
 
 // Stats
-$totalActive = $db->query('SELECT COUNT(*) FROM employee WHERE is_active=1')->fetchColumn();
+$totalActive = $db->query('SELECT COUNT(*) FROM employee WHERE is_active=True')->fetchColumn();
 
 $stAttended = $db->prepare('SELECT COUNT(DISTINCT staff_id) FROM attendance WHERE att_date=?');
 $stAttended->execute([$today]);
