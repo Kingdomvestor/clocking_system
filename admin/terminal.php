@@ -30,7 +30,7 @@ $employees = $db->prepare("
         (SELECT COUNT(*) FROM webauthn_credentials w WHERE w.staff_id = e.staff_id) AS has_fp
     FROM employee e
     LEFT JOIN attendance a ON a.staff_id = e.staff_id AND a.att_date = ?
-    WHERE e.is_active = 1
+    WHERE e.is_active = True
     ORDER BY e.full_name ASC
 ");
 $employees->execute([$today]);
