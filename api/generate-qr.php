@@ -16,7 +16,7 @@ if (!in_array($action, ['clock_in', 'clock_out', 'register'])) {
 }
 
 // Validate staff exists and is active
-$emp = db()->prepare('SELECT staff_id, full_name FROM employee WHERE staff_id = ? AND is_active = 1');
+$emp = db()->prepare('SELECT staff_id, full_name FROM employee WHERE staff_id = ? AND is_active = True');
 $emp->execute([$staff_id]);
 $emp = $emp->fetch();
 
